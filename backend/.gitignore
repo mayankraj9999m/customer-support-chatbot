@@ -163,5 +163,3 @@ cython_debug/
 
 # Custom Ignore specifically for this project
 test.db
-*.keras
-*.pkl
