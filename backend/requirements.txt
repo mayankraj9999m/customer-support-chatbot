@@ -1,0 +1,13 @@
+fastapi
+uvicorn
+scikit-learn
+pandas
+sqlalchemy
+psycopg2-binary
+python-dotenv
+spacy
+tensorflow
+pytest
+httpx
+langchain-openai
+langchain

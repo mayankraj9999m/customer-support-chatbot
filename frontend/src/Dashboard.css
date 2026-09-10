@@ -1,0 +1,114 @@
+.dashboard-container {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 40px 20px;
+  background: var(--canvas);
+  color: var(--ink);
+  animation: fadeIn 0.4s ease forwards;
+}
+
+.dashboard-container h2 {
+  margin-top: 0;
+  margin-bottom: 32px;
+  font-size: 32px;
+  font-weight: 700;
+  color: var(--ink);
+  padding-bottom: 16px;
+  text-align: center;
+}
+
+/* Masonry layout container for KPI cards */
+.kpi-cards {
+  column-count: 3;
+  column-gap: 20px;
+  margin-bottom: 40px;
+}
+
+/* Masonry Items */
+.kpi-card {
+  break-inside: avoid;
+  background: var(--surface-card);
+  padding: 32px 24px;
+  margin-bottom: 20px;
+  border-radius: var(--radius-card);
+  border: 1px solid var(--hairline);
+  text-align: center;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.kpi-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.08);
+}
+
+.kpi-card h3 {
+  margin: 0;
+  font-size: 16px;
+  color: var(--mute);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.kpi-value {
+  margin: 16px 0 0;
+  font-size: 48px;
+  font-weight: 700;
+  color: var(--primary);
+  line-height: 1;
+}
+
+.charts-grid {
+  column-count: 2;
+  column-gap: 20px;
+}
+
+.chart-box {
+  break-inside: avoid;
+  background: var(--surface-card);
+  padding: 32px 24px;
+  margin-bottom: 20px;
+  border-radius: var(--radius-card);
+  border: 1px solid var(--hairline);
+}
+
+.chart-box h3 {
+  margin-top: 0;
+  margin-bottom: 24px;
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--ink);
+  text-align: center;
+}
+
+@media (max-width: 900px) {
+  .kpi-cards { column-count: 2; }
+  .charts-grid { column-count: 1; }
+}
+
+@media (max-width: 600px) {
+  .kpi-cards { column-count: 1; }
+}
+
+.spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid var(--hairline);
+  border-left-color: var(--primary);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin: 0 auto 16px;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.dashboard-container.loading,
+.dashboard-container.error {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 500px;
+}
