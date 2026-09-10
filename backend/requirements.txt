@@ -11,3 +11,6 @@ pytest
 httpx
 langchain-openai
 langchain
+asyncpg
+aiosqlite
+pytest-asyncio

@@ -1,5 +1,6 @@
 import os
-from sqlalchemy import create_engine, Column, Integer, String, Float, DateTime
+from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
+from sqlalchemy import Column, Integer, String, Float, DateTime
 from sqlalchemy.orm import declarative_base, sessionmaker
 from datetime import datetime
 from dotenv import load_dotenv
@@ -13,8 +14,46 @@ DATABASE_URL = os.getenv("DATABASE_URL")
 if not DATABASE_URL:
     raise ValueError("DATABASE_URL is not set in the environment variables.")
 
-engine = create_engine(DATABASE_URL)
-SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+# Convert sync URL to async URL
+if DATABASE_URL.startswith("postgresql://"):
+    DATABASE_URL = DATABASE_URL.replace("postgresql://", "postgresql+asyncpg://", 1)
+    
+    # asyncpg doesn't support 'sslmode' or 'channel_binding' as query params directly in the same way.
+    # It uses 'ssl=require' instead of 'sslmode=require'.
+    if "?" in DATABASE_URL:
+        # We will parse out the unsupported query parameters
+        import urllib.parse as urlparse
+        parts = list(urlparse.urlparse(DATABASE_URL))
+        query = dict(urlparse.parse_qsl(parts[4]))
+        
+        # Translate sslmode to ssl for asyncpg
+        if "sslmode" in query:
+            query["ssl"] = query.pop("sslmode")
+        
+        # Remove channel_binding as asyncpg doesn't support this kwarg directly
+        if "channel_binding" in query:
+            query.pop("channel_binding")
+            
+        parts[4] = urlparse.urlencode(query)
+        DATABASE_URL = urlparse.urlunparse(parts)
+
+elif DATABASE_URL.startswith("sqlite:///"):
+    DATABASE_URL = DATABASE_URL.replace("sqlite:///", "sqlite+aiosqlite:///", 1)
+
+# Create engine with driver-specific arguments
+engine_kwargs = {
+    "echo": False,
+    "pool_pre_ping": True,
+    "pool_recycle": 300
+}
+
+if DATABASE_URL.startswith("postgresql"):
+    engine_kwargs["connect_args"] = {"statement_cache_size": 0}
+
+engine = create_async_engine(DATABASE_URL, **engine_kwargs)
+SessionLocal = sessionmaker(
+    bind=engine, class_=AsyncSession, expire_on_commit=False
+)
 
 Base = declarative_base()
 
@@ -28,5 +67,18 @@ class ConversationLog(Base):
     entities = Column(String) # Stored as JSON string
     timestamp = Column(DateTime, default=datetime.utcnow)
 
-# Create tables
-Base.metadata.create_all(bind=engine)
+class SessionMemory(Base):
+    __tablename__ = "session_memory"
+
+    session_id = Column(String, primary_key=True, index=True)
+    history = Column(String, default="[]") # Stored as JSON string
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+async def init_db():
+    async with engine.begin() as conn:
+        # Create tables asynchronously
+        await conn.run_sync(Base.metadata.create_all)
+
+async def get_db():
+    async with SessionLocal() as db:
+        yield db

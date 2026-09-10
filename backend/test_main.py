@@ -1,38 +1,47 @@
 import pytest
-from fastapi.testclient import TestClient
-from main import app, get_db
-from sqlalchemy import create_engine
+import pytest_asyncio
+from httpx import AsyncClient, ASGITransport
+from main import app
+from database import get_db, Base
+from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
 from sqlalchemy.orm import sessionmaker
-from database import Base
 
 # Setup an in-memory SQLite database for testing
-SQLALCHEMY_DATABASE_URL = "sqlite:///./test.db"
-engine = create_engine(SQLALCHEMY_DATABASE_URL, connect_args={"check_same_thread": False})
-TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+SQLALCHEMY_DATABASE_URL = "sqlite+aiosqlite:///:memory:"
+engine = create_async_engine(SQLALCHEMY_DATABASE_URL, echo=False)
+TestingSessionLocal = sessionmaker(
+    bind=engine, class_=AsyncSession, expire_on_commit=False
+)
 
-# Override the database dependency to use the test database
-def override_get_db():
-    try:
-        db = TestingSessionLocal()
+async def override_get_db():
+    async with TestingSessionLocal() as db:
         yield db
-    finally:
-        db.close()
 
 app.dependency_overrides[get_db] = override_get_db
 
-# Create test tables
-Base.metadata.create_all(bind=engine)
+@pytest_asyncio.fixture(autouse=True)
+async def setup_db():
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
+    yield
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.drop_all)
 
-client = TestClient(app)
+@pytest_asyncio.fixture
+async def async_client():
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as ac:
+        yield ac
 
-def test_health_check():
-    response = client.get("/health")
+@pytest.mark.asyncio
+async def test_health_check(async_client):
+    response = await async_client.get("/health")
     assert response.status_code == 200
     data = response.json()
     assert data["status"] == "ok"
     
-def test_analytics_empty():
-    response = client.get("/analytics")
+@pytest.mark.asyncio
+async def test_analytics_empty(async_client):
+    response = await async_client.get("/analytics")
     assert response.status_code == 200
     data = response.json()
     assert data["total_messages"] >= 0
@@ -40,4 +49,4 @@ def test_analytics_empty():
 
 # Note: Testing /chat endpoint requires the DL model to be trained and loaded. 
 # We'll skip predicting in the test unless mocking is added, or assume model is available.
-# In a real environment, we'd mock the `model.predict` and `nlp` calls.
+# In a real environment, we'd mock the `ml_service` and `llm_service` calls.
