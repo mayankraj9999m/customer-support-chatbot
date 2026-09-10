@@ -9,8 +9,13 @@ spacy
 tensorflow
 pytest
 httpx
-langchain-openai
 langchain
+langchain-openai
+langchain-google-genai
 asyncpg
 aiosqlite
 pytest-asyncio
+passlib
+bcrypt
+pyjwt
+python-multipart

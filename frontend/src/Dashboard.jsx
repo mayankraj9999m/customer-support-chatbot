@@ -2,8 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid } from 'recharts';
 import './Dashboard.css';
 
-const HTTP_API_URL = 'http://localhost:8000/analytics';
-const WS_API_URL = 'ws://localhost:8000/ws/analytics';
+const HTTP_API_URL = `${import.meta.env.VITE_API_URL}/analytics`;
+const WS_API_URL = `${import.meta.env.VITE_API_URL}/ws/analytics`;
 
 // Pinterest inspired charting colors
 const COLORS = ['#e60023', '#33332e', '#62625b', '#91918c', '#c8c8c1'];

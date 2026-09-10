@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import './ChatWindow.css';
 
-const API_URL = 'http://localhost:8000/chat';
+const API_URL = `${import.meta.env.VITE_API_URL}/chat`;
 
 function ChatWindow() {
   const [messages, setMessages] = useState([

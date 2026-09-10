@@ -1,7 +1,7 @@
 import os
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
-from sqlalchemy import Column, Integer, String, Float, DateTime
-from sqlalchemy.orm import declarative_base, sessionmaker
+from sqlalchemy import Column, Integer, String, Float, DateTime, ForeignKey, Boolean
+from sqlalchemy.orm import declarative_base, sessionmaker, relationship
 from datetime import datetime
 from dotenv import load_dotenv
 
@@ -73,6 +73,54 @@ class SessionMemory(Base):
     session_id = Column(String, primary_key=True, index=True)
     history = Column(String, default="[]") # Stored as JSON string
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+class User(Base):
+    __tablename__ = "users"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    email = Column(String, unique=True, index=True)
+    name = Column(String, nullable=True)
+    hashed_password = Column(String)
+    role = Column(String, default="customer") # "customer" or "admin"
+    created_at = Column(DateTime, default=datetime.utcnow)
+    
+    orders = relationship("Order", back_populates="owner")
+
+class Product(Base):
+    __tablename__ = "products"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String, index=True)
+    description = Column(String)
+    price = Column(Float)
+    image_url = Column(String)
+    stock_quantity = Column(Integer, default=100)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+class Order(Base):
+    __tablename__ = "orders"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"))
+    total_amount = Column(Float)
+    status = Column(String, default="Pending") # Pending, Shipped, Delivered, Canceled
+    tracking_number = Column(String, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    
+    owner = relationship("User", back_populates="orders")
+    items = relationship("OrderItem", back_populates="order")
+
+class OrderItem(Base):
+    __tablename__ = "order_items"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    order_id = Column(Integer, ForeignKey("orders.id"))
+    product_id = Column(Integer, ForeignKey("products.id"))
+    quantity = Column(Integer)
+    price_at_time = Column(Float)
+    
+    order = relationship("Order", back_populates="items")
+    product = relationship("Product")
 
 async def init_db():
     async with engine.begin() as conn:

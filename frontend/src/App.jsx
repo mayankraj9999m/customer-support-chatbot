@@ -1,38 +1,39 @@
-import React, { useState } from 'react'
-import ChatWindow from './ChatWindow'
-import Dashboard from './Dashboard'
-import './index.css'
+import React from 'react';
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import Navbar from './components/Navbar';
+import ChatbotWidget from './components/ChatbotWidget';
+import Home from './pages/Home';
+import ProductDetail from './pages/ProductDetail';
+import Cart from './pages/Cart';
+import Login from './pages/Login';
+import Register from './pages/Register';
+import Orders from './pages/Orders';
+import Analytics from './pages/Analytics';
+import Profile from './pages/Profile';
 
 function App() {
-  const [currentView, setCurrentView] = useState('chat');
-
   return (
-    <div className="app-container">
-      <header className="app-header">
-        <h1>AI Customer Support</h1>
-        <p>Advanced Deep Learning NLP Integration</p>
+    <BrowserRouter>
+      <div className="app-container">
+        <Navbar />
         
-        <div className="nav-toggle">
-          <button 
-            className={currentView === 'chat' ? 'active' : ''} 
-            onClick={() => setCurrentView('chat')}
-          >
-            Live Chat
-          </button>
-          <button 
-            className={currentView === 'dashboard' ? 'active' : ''} 
-            onClick={() => setCurrentView('dashboard')}
-          >
-            Admin Dashboard
-          </button>
-        </div>
-      </header>
-      
-      <main className="app-main">
-        {currentView === 'chat' ? <ChatWindow /> : <Dashboard />}
-      </main>
-    </div>
-  )
+        <main className="main-content">
+          <Routes>
+            <Route path="/" element={<Home />} />
+            <Route path="/product/:id" element={<ProductDetail />} />
+            <Route path="/cart" element={<Cart />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/register" element={<Register />} />
+            <Route path="/orders" element={<Orders />} />
+            <Route path="/analytics" element={<Analytics />} />
+            <Route path="/profile" element={<Profile />} />
+          </Routes>
+        </main>
+
+        <ChatbotWidget />
+      </div>
+    </BrowserRouter>
+  );
 }
 
-export default App
+export default App;
